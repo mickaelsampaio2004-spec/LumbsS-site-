@@ -47,3 +47,35 @@ if ('IntersectionObserver' in window) { const
   revealTargets.forEach((element) => 
   element.classList.add('visible'));
 }
+
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+});
+
+document.addEventListener('click', async (event) => {
+  const installLink = event.target.closest('a[href="/app/"]');
+
+  if (!installLink) return;
+
+  if (deferredInstallPrompt) {
+    event.preventDefault();
+
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  const isIOS =
+    /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+    !window.matchMedia('(display-mode: standalone)').matches;
+
+  if (isIOS) {
+    event.preventDefault();
+    window.location.href = '/app/?install=ios';
+  }
+});
